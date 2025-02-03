@@ -2,6 +2,11 @@
 
 t_server *server_struct = NULL;
 
+void leaks_checker()
+{
+  system();
+}
+
 int main()
 {
     print_data("Generate the server struct ....");
@@ -9,17 +14,13 @@ int main()
     init_server_struct(server_struct);
     print_data("Init the server struct ...");
 
-    // Set up signal handlers once, outside the loop
+    // Set up signal handlers once
     struct sigaction sa;
     sa.sa_sigaction = handle_signal;
-    sa.sa_flags = SA_SIGINFO;
+    sa.sa_flags = SA_SIGINFO | SA_NODEFER;
+    sigemptyset(&sa.sa_mask);
     sigaction(SIGUSR1, &sa, NULL);
     sigaction(SIGUSR2, &sa, NULL);
-
-    // struct sigaction sa_death;
-    // sa_death.sa_handler = handle_death_signal;
-    // sa_death.sa_flags = 0;
-    // sigaction(SIGUSR1, &sa_death, NULL);
 
     printf("Server PID: %d\n", getpid());
 
