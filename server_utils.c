@@ -2,7 +2,6 @@
 
 extern t_server *server_struct;
 
-
 t_server *gen_server_struct(void)
 {
     t_server *ss = malloc(sizeof(t_server));
@@ -52,9 +51,7 @@ void clean_up_server(t_server *server_struct)
 
 int check_proces_id(t_server *server_struc, int new_proc_id)
 {
-    if (server_struc->client_proc_id == new_proc_id)
-        return (1);
-    return (0);
+    return (server_struc->client_proc_id == new_proc_id);
 }
 
 void save_bytes(t_server *server_struct, unsigned char byte)
@@ -70,7 +67,6 @@ void save_bytes(t_server *server_struct, unsigned char byte)
     printf("Received byte: %c\n", byte);
 }
 
-// server_utils.c
 void process_received_bit(t_server *server_struct, int bit)
 {
     static unsigned char byte = 0;
@@ -81,7 +77,7 @@ void process_received_bit(t_server *server_struct, int bit)
 
     if (bit_count == 8)
     {
-        if (byte == 0x00) // Termination byte
+        if (byte == 0x00)  // Termination byte
         {
             print_data("Termination byte received. Closing connection.");
             server_struct->death_state = 1;
@@ -96,96 +92,53 @@ void process_received_bit(t_server *server_struct, int bit)
     }
 }
 
-// Remove the handle_death_signal function.
-
 void handle_signal(int signal, siginfo_t *info, void *context)
 {
     (void)context;
     int bit;
 
     if (signal == SIGUSR2)
-    {
         bit = 1;
-        printf("Server: Received bit [1] from client PID %d\n", info->si_pid);
-    }
     else if (signal == SIGUSR1)
-    {
         bit = 0;
-        printf("Server: Received bit [0] from client PID %d\n", info->si_pid);
-    }
     else
-    {
-        print_data("Server: Received unexpected signal.");
         return;
-    }
 
-	if (server_struct->client_proc_id != 0 && 
+    // Reject signals from other clients during active connection
+    if (server_struct->client_proc_id != 0 &&
         server_struct->client_proc_id != info->si_pid)
     {
-        printf("Server: Ignoring signal from unauthorized client PID %d \n", info->si_pid);
+        printf("Server: Ignoring signal from PID %d (active client: %d)\n",
+              info->si_pid, server_struct->client_proc_id);
         return;
     }
 
-
+    // New client connection
     if (server_struct->client_proc_id == 0)
     {
         server_struct->client_proc_id = info->si_pid;
-        print_data("Server: New client connected with PID");
-    }
-    else if (!check_proces_id(server_struct, info->si_pid))
-    {
-        print_data("Server: Unexpected client PID %d. Ignoring signal.");
-        return;
+        printf("Server: New client connected with PID %d\n", info->si_pid);
     }
 
     process_received_bit(server_struct, bit);
 
-    // Acknowledge receipt of the bit
-    printf("Server: Sending acknowledgment to client PID %d.", info->si_pid);
+    // Send acknowledgment
     if (kill(info->si_pid, SIGUSR1) == -1)
     {
-        print_error("Server: Failed to send acknowledgment.");
+        printf("Server: Failed to ack PID %d\n", info->si_pid);
     }
 }
 
-// void handle_death_signal(int signal)
-// {
-//     static int zero_bits_count = 0;
-
-//     if (signal == SIGUSR1)
-//         zero_bits_count++;
-//     else
-//         zero_bits_count = 0;
-
-//     if (zero_bits_count == 32)
-//     {
-//         print_data("Death signal received. Resetting for next client.\n");
-//         server_struct->death_state = 1;
-//         server_struct->final_sgs = 1;
-//     }
-// }
-
 void server_loop(t_server *server_struct)
 {
-    // Signal handlers are already set up in main(). Do NOT reset them here.
     while (!server_struct->final_sgs)
         pause();
 }
 
 void restart_server_for_next_client(t_server *server_struct)
 {
-    printf("Resetting server for the next client...\n");
+    printf("\nResetting server for next client...\n");
     clean_up_server(server_struct);
     init_server_struct(server_struct);
-}
-
-
-int mark_final_signal(t_server *server_struct)
-{
-    if (server_struct->death_state == 1)
-    {
-        server_struct->final_sgs = 1;
-        return (1);
-    }
-    return (0);
+    printf("Ready for new connections!\n");
 }
