@@ -33,7 +33,7 @@ int main(int argc, char **argv)
 	print_data("Init the client struct ...");
     send_data(client_struct);
 	print_data("send data to the server ...");
-    if (mark_file_signal(client_struct))
+    if (mark_finale_signal(client_struct))
     {
 		print_data("Send death signal to the server ...");
         send_death_signal(proc_id);
