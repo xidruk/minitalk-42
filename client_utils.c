@@ -56,7 +56,7 @@ void clean_client_struct(t_client *client_struct)
     client_struct->r_data_size = 0;
 }
 
-int mark_file_signal(t_client *client_struct)
+int mark_finale_signal(t_client *client_struct)
 {
     if (!client_struct)
     {
@@ -121,7 +121,7 @@ void send_data(t_client *client_struct)
             send_bit(client_struct->server_proc_id, (tmp >> bit_shifter) & 1);
             bit_shifter--;
         }
-        client_struct->s_data_size++;
+        client_struct->r_data_size++;
         client_struct->data_to_send++;
     }
 }
