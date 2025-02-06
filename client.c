@@ -1,52 +1,62 @@
+/* ************************************************************************** */
+/*                                                                            */
+/*                                                        :::      ::::::::   */
+/*   client.c                                           :+:      :+:    :+:   */
+/*                                                    +:+ +:+         +:+     */
+/*   By: kbarkan <marvin@42.fr>                     +#+  +:+       +#+        */
+/*                                                +#+#+#+#+#+   +#+           */
+/*   Created: 2025/02/06 06:10:45 by kbarkan           #+#    #+#             */
+/*   Updated: 2025/02/06 06:10:47 by kbarkan          ###   ########.fr       */
+/*                                                                            */
+/* ************************************************************************** */
+
 #include "g_header.h"
 
-volatile sig_atomic_t g_ack_received = 0;
+volatile sig_atomic_t	g_ack_received = 0;
 
-void handle_ack(int signal)
+void	handle_ack(int signal)
 {
-    if (signal == SIGUSR1)
+	if (signal == SIGUSR1)
 	{
-        g_ack_received = 1;
-		print_data("Client : Received Acknowledgement from the server ... ");
+		g_ack_received = 1;
+		print_data("[Client Received Acknowledgement From the Server !]");
 	}
 }
 
-int main(int argc, char **argv)
+void	kill_client_life_cycle(t_client *client_struct, int proc_id)
 {
-    if (!pars_data(argc, argv))
-    {
-        printf("Error: Invalid arguments\n");
-        exit(1);
-    }
+	print_data("Send Death Signal To The Server ...");
+	send_death_signal(proc_id);
+	clean_client_struct(client_struct);
+	print_data("Clean Up The Client Struct ...");
+	print_data("Data Was Sent Successfully!");
+}
 
-    int proc_id = atoi(argv[1]);
-    char *data = argv[2];
+int	main(int argc, char **argv)
+{
+	char				*data;
+	int					proc_id;
+	struct sigaction	sa;
+	t_client			*client_struct;
 
-    // Set up signal handler for acknowledgments
-    struct sigaction sa;
-    sa.sa_handler = handle_ack;
-    sa.sa_flags = 0;
-    sigaction(SIGUSR1, &sa, NULL);
-
-    t_client *client_struct = gen_client_struct();
-    init_client_struct(client_struct, proc_id, data);
-	print_data("Init the client struct ...");
-    send_data(client_struct);
-	print_data("send data to the server ...");
-    if (mark_finale_signal(client_struct))
-    {
-		print_data("Send death signal to the server ...");
-        send_death_signal(proc_id);
-        clean_client_struct(client_struct);
-		print_data("clean up the client struct ...");
-        printf("Data was sent successfully!\n");
-    }
-    else
-    {
-        printf("Data was not sent successfully. An error occurred.\n");
-        exit(1);
-    }
-
-    free(client_struct);
-    return (0);
+	pars_data(argc, argv);
+	proc_id = swap_types(argv[1]);
+	data = argv[2];
+	sa.sa_handler = handle_ack;
+	sa.sa_flags = 0;
+	sigaction(SIGUSR1, &sa, NULL);
+	client_struct = gen_client_struct();
+	init_client_struct(client_struct, proc_id, data);
+	print_data("Init The Client Struct ...");
+	send_data(client_struct);
+	print_data("Send Data To The Server ...");
+	if (mark_finale_signal(client_struct))
+		kill_client_life_cycle(client_struct, proc_id);
+	else
+	{
+		printf("Data was not sent successfully. An error occurred.\n");
+		exit(1);
+	}
+	free(client_struct);
+	return (0);
 }
