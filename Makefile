@@ -1,74 +1,53 @@
-# Compiler and Flags
-CC = gcc
+NAME = mulib.a
+CC = cc 
 CFLAGS = -Wall -Wextra -Werror
 
-# Directories
-SRCDIR_CLIENT = client_utils
-SRCDIR_SERVER = server_utils
-SRCDIR_SHARED = shared_tools
-INCDIR = .
-OBJDIR = obj
+CLIENT_UTILS_SRCS = \
+	client_utils/client_get_data_size.c \
+	client_utils/client_init_s.c \
+	client_utils/client_cleaner.c \
+	client_utils/client_marker.c \
+	client_utils/client_send_data.c \
+	client_utils/client_send_death_signal.c
 
-# Source files for the client executable
-SRC_CLIENT = $(SRCDIR_CLIENT)/send_death_signal.c \
-             $(SRCDIR_CLIENT)/client_struct_controller.c \
-             $(SRCDIR_CLIENT)/client_struct_utils.c \
-             $(SRCDIR_CLIENT)/data_parser.c \
-             $(SRCDIR_CLIENT)/send_data.c \
-             client.c
+SERVER_UTILS_SRCS = \
+	server_utils/init_server_struct.c \
+	server_utils/clean_server_struct.c \
+	server_utils/r_and_s_bytes.c \
+	server_utils/handle_signal.c \
+	server_utils/loop_server.c \
+	server_utils/restart_server.c
 
-# Source files for the server executable
-SRC_SERVER = $(SRCDIR_SERVER)/server_struct_utils.c \
-             $(SRCDIR_SERVER)/struct_markers.c \
-             $(SRCDIR_SERVER)/checkers.c \
-             $(SRCDIR_SERVER)/collect_bits.c \
-             $(SRCDIR_SERVER)/handle_signal.c \
-             $(SRCDIR_SERVER)/server_looper.c \
-             server.c
+SHARED_UTILS_SRCS = \
+	shared_utils/print_intergers.c \
+	shared_utils/swap_types.c \
+	shared_utils/print_data.c \
+	shared_utils/print_error.c \
+	shared_utils/data_parser.c
 
-# Object files (map .c to .o in obj/ directory)
-OBJ_CLIENT = $(patsubst %.c, $(OBJDIR)/%.o, $(SRC_CLIENT))
-OBJ_SERVER = $(patsubst %.c, $(OBJDIR)/%.o, $(SRC_SERVER))
+OBJS = \
+	$(CLIENT_UTILS_SRCS:.c=.o) \
+	$(SERVER_UTILS_SRCS:.c=.o) \
+	$(SHARED_UTILS_SRCS:.c=.o)
 
-# Header files (include global header and specific ones)
-HEADERS = g_header.h \
-          $(SRCDIR_CLIENT)/client_utils_h.h \
-          $(SRCDIR_SERVER)/server_utils_h.h \
-          $(SRCDIR_SHARED)/shared_tools.h
+all: $(NAME) client server
 
-# Executable files
-CLIENT_EXEC = client
-SERVER_EXEC = server
+$(NAME): $(OBJS)
+	ar rcs $@ $^
 
-# Default target (builds everything)
-all: $(CLIENT_EXEC) $(SERVER_EXEC)
+client: client.o $(NAME)
+	$(CC) $(CFLAGS) -o $@ $< $(NAME)
 
-# Ensure the object directory exists
-$(OBJDIR):
-	mkdir -p $(OBJDIR)
+server: server.o $(NAME)
+	$(CC) $(CFLAGS) -o $@ $< $(NAME)
 
-# Compile object files for client and server
-$(OBJDIR)/%.o: %.c | $(OBJDIR)
-	$(CC) $(CFLAGS) -c $< -o $@ -I $(INCDIR)
+%.o: %.c g_header.h
+	$(CC) $(CFLAGS) -c -o $@ $<
 
-# Compile client executable
-$(CLIENT_EXEC): $(OBJ_CLIENT) | $(OBJDIR)
-	$(CC) $(CFLAGS) -o $(CLIENT_EXEC) $(OBJ_CLIENT)
-
-# Compile server executable
-$(SERVER_EXEC): $(OBJ_SERVER) | $(OBJDIR)
-	$(CC) $(CFLAGS) -o $(SERVER_EXEC) $(OBJ_SERVER)
-
-# Clean up object files and executables
 clean:
-	rm -rf $(OBJDIR)
+	rm -f $(OBJS) client.o server.o
 
-# Remove everything including the executables
 fclean: clean
-	rm -f $(CLIENT_EXEC) $(SERVER_EXEC)
+	rm -f $(NAME) client server
 
-# Rebuild everything
 re: fclean all
-
-# Phony targets (not real files)
-.PHONY: all clean fclean re
