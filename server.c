@@ -31,7 +31,7 @@ int	main(void)
 	while (1)
 	{
 		server_loop(g_server_struct);
-		if (g_server_struct->death_state)
+		if (g_server_struct->final_sgs)
 			restart_server_for_next_client(g_server_struct);
 	}
 	clean_up_server(g_server_struct);
