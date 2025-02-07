@@ -50,4 +50,5 @@ void	init_server_struct(t_server *g_server_struct)
 	g_server_struct->r_data_size = 0;
 	g_server_struct->client_proc_id = 0;
 	g_server_struct->death_state = 0;
+	g_server_struct->is_client_dead = 0;
 }
