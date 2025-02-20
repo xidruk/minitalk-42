@@ -14,19 +14,20 @@
 
 extern volatile sig_atomic_t	g_ack_received;
 
-void	send_0bit(int proc_id)
+void	send_0bit(int proc_id, t_client *client_struct)
 {
 	print_data("Client Send Bit : [0]");
 	if (kill(proc_id, SIGUSR1) == -1)
 	{
 		print_error("Kill Func Fails To Send Bit : [0]");
-		print_error("func-ref:[send_0bit]");
+		print_error("func-ref:[send_0bit] , [line : 17]");
 		print_error("f-ref:[client_send_data.c]");
+		free(client_struct);
 		exit(1);
 	}
 }
 
-void	send_1bit(int proc_id)
+void	send_1bit(int proc_id, t_client *client_struct)
 {
 	print_data("Client Send Bit : [1]");
 	if (kill(proc_id, SIGUSR2) == -1)
@@ -34,19 +35,20 @@ void	send_1bit(int proc_id)
 		print_error("Kill Func Fails To Send Bit : [1]");
 		print_error("func-ref:[send_1bit]");
 		print_error("f-ref:[client_send_data.c]");
+		free(client_struct);
 		exit(1);
 	}
 }
 
-void	send_bit(int proc_id, int bit)
+void	send_bit(int proc_id, int bit, t_client *client_struct)
 {
 	int	timeout;
 
 	timeout = 1000;
 	if (bit == 0)
-		send_0bit(proc_id);
+		send_0bit(proc_id, client_struct);
 	else
-		send_1bit(proc_id);
+		send_1bit(proc_id, client_struct);
 	while (!g_ack_received && timeout-- > 0)
 		usleep(100);
 	if (!g_ack_received)
@@ -55,6 +57,7 @@ void	send_bit(int proc_id, int bit)
 		print_error("Error : Not Ack Received ! ");
 		print_error("func-ref:[send_bit]");
 		print_error("f-ref:[client_send_data.c]");
+		free(client_struct);
 		exit(1);
 	}
 	g_ack_received = 0;
@@ -71,7 +74,7 @@ void	send_data(t_client *client_struct)
 		bit_shifter = 7;
 		while (bit_shifter >= 0)
 		{
-			send_bit(client_struct->server_proc_id, (tmp >> bit_shifter) & 1);
+			send_bit(client_struct->server_proc_id, (tmp >> bit_shifter) & 1, client_struct);
 			bit_shifter--;
 		}
 		client_struct->r_data_size++;
