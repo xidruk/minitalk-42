@@ -31,7 +31,8 @@
 
 //===> Type def Structs
 
-typedef struct client_s {
+typedef struct client_s
+{
 	char				*data_to_send;
 	int					current_state;
 	int					final_sgs;
@@ -40,7 +41,8 @@ typedef struct client_s {
 	int					server_proc_id;
 }	t_client;
 
-typedef struct server_s {
+typedef struct server_s
+{
 	char				*received_data;
 	int					current_state;
 	int					final_sgs;
@@ -58,11 +60,11 @@ t_client	*gen_client_struct(void);
 void		init_client_struct(t_client *client_struct,
 				int proc_id, char *data);
 int			mark_finale_signal(t_client *client_struct);
-void		send_0bit(int proc_id);
-void		send_1bit(int proc_id);
-void		send_bit(int proc_id, int bit);
+void		send_0bit(int proc_id, t_client *client_struct);
+void		send_1bit(int proc_id, t_client *client_struct);
+void		send_bit(int proc_id, int bit, t_client *client_struct);
 void		send_data(t_client *client_struct);
-void		send_death_signal(int proc_id);
+void		send_death_signal(int proc_id, t_client *client_struct);
 
 //===> Extern Structs
 
