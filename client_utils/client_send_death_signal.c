@@ -14,7 +14,7 @@
 
 extern volatile sig_atomic_t	g_ack_received;
 
-void	send_death_signal(int proc_id)
+void	send_death_signal(int proc_id, t_client *client_struct)
 {
 	unsigned char	term_byte;
 	int				bit_shifter;
@@ -23,7 +23,7 @@ void	send_death_signal(int proc_id)
 	bit_shifter = 7;
 	while (bit_shifter >= 0)
 	{
-		send_bit(proc_id, (term_byte >> bit_shifter) & 1);
+		send_bit(proc_id, (term_byte >> bit_shifter) & 1, client_struct);
 		bit_shifter--;
 	}
 }
